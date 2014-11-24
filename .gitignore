@@ -1,3 +1,5 @@
 # Ignore configuration files that may contain sensitive information.
 .idea
 .vagrant
+/drupal/nbproject/private/
+/drupal/drupal-7.34/nbproject/private/

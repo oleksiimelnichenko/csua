@@ -331,6 +331,13 @@ function date_text_element_process($element, &$form_state, $form) {
   )));
   $element['date']['#ajax'] = !empty($element['#ajax']) ? $element['#ajax'] : FALSE;
 
+  // Make changes if instance is set to be rendered as a regular field.
+  if (!empty($element['#instance']['widget']['settings']['no_fieldset']) && $element['#field']['cardinality'] == 1) {
+    $element['date']['#title'] = check_plain($element['#instance']['label']);
+    $element['date']['#title_display'] = $element['#title_display'];
+    $element['date']['#required'] = $element['#required'];
+  }
+
   // Keep the system from creating an error message for the sub-element.
   // We'll set our own message on the parent element.
   // $element['date']['#required'] = $element['#required'];
@@ -370,6 +377,11 @@ function date_text_validate($element, &$form_state) {
   }
   $input_exists = NULL;
   $input = drupal_array_get_nested_value($form_state['values'], $element['#parents'], $input_exists);
+
+  // Trim extra spacing off user input of text fields.
+  if (isset($input['date'])) {
+    $input['date'] = trim($input['date']);
+  }
 
   drupal_alter('date_text_pre_validate', $element, $form_state, $input);
 

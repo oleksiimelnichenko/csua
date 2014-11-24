@@ -86,7 +86,7 @@ function date_field_widget_form(&$form, &$form_state, $field, $instance, $langco
   }
 
   module_load_include('inc', 'date_api', 'date_api_elements');
-  $timezone = date_get_timezone($field['settings']['tz_handling'], isset($items[0]['timezone']) ? $items[0]['timezone'] : date_default_timezone());
+  $timezone = date_get_timezone($field['settings']['tz_handling'], isset($items[$delta]['timezone']) ? $items[$delta]['timezone'] : date_default_timezone());
 
   // TODO see if there's a way to keep the timezone element from ever being
   // nested as array('timezone' => 'timezone' => value)). After struggling
@@ -122,6 +122,12 @@ function date_field_widget_form(&$form, &$form_state, $field, $instance, $langco
       '#attributes' => array('class' => array('date-no-float')),
       '#date_label_position' => $instance['widget']['settings']['label_position'],
     );
+  }
+
+  // Make changes if instance is set to be rendered as a regular field.
+  if (!empty($instance['widget']['settings']['no_fieldset'])) {
+   $element['#title'] = check_plain($instance['label']);
+   $element['#theme_wrappers'] = ($field['cardinality'] == 1) ? array('date_form_element') : array();
   }
 
   return $element;
@@ -408,6 +414,14 @@ function date_combo_element_process($element, &$form_state, $form) {
     $element[$from_field]['#date_title'] = t('@field_name', array('@field_name' => $instance['label']));
   }
 
+  // Make changes if instance is set to be rendered as a regular field.
+  if (!empty($instance['widget']['settings']['no_fieldset'])) {
+    unset($element[$from_field]['#description']);
+    if (!empty($field['settings']['todate']) && isset($element['#description'])) {
+      $element['#description'] .= '<span class="js-hide"> '. t("Empty 'End date' values will use the 'Start date' values.") .'</span>';
+    }
+  }
+
   $context = array(
     'field'     => $field,
     'instance'  => $instance,
@@ -452,6 +466,10 @@ function date_combo_validate($element, &$form_state) {
   $delta = $element['#delta'];
   $langcode = $element['#language'];
 
+  // Related issue: https://drupal.org/node/2279831.
+  if (!is_array($element['#field_parents'])) {
+    $element['#field_parents'] = array();
+  }
   $form_values = drupal_array_get_nested_value($form_state['values'], $element['#field_parents']);
   $form_input = drupal_array_get_nested_value($form_state['input'], $element['#field_parents']);
 

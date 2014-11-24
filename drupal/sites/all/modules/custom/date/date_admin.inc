@@ -74,6 +74,12 @@ function date_default_formatter_settings_form($field, $instance, $view_mode, $fo
     '#description' => t('Identify specific start and/or end dates in the format YYYY-MM-DDTHH:MM:SS, or leave blank for all available dates.'),
   );
 
+  $form['show_remaining_days'] = array(
+    '#title' => t('Show remaining days'),
+    '#type' => 'checkbox',
+    '#default_value' => $settings['show_remaining_days'],
+    '#weight' => 0,
+  );
   return $form;
 }
 
@@ -150,7 +156,9 @@ function date_default_formatter_settings_summary($field, $instance, $view_mode) 
       'value' => t('Display Start date only'),
       'value2' => t('Display End date only'),
     );
-    $summary[] = $options[$settings['fromto']];
+    if (isset($options[$settings['fromto']])) {
+      $summary[] = $options[$settings['fromto']];
+    }
   }
 
   if (array_key_exists('multiple_number', $settings) && !empty($field['cardinality'])) {
@@ -159,6 +167,10 @@ function date_default_formatter_settings_summary($field, $instance, $view_mode) 
       '@date1' => !empty($settings['multiple_from']) ? $settings['multiple_from'] : t('earliest'),
       '@date2' => !empty($settings['multiple_to']) ? $settings['multiple_to'] : t('latest'),
     ));
+  }
+
+  if (array_key_exists('show_remaining_days', $settings)) {
+    $summary[] = t('Show remaining days: @value', array('@value' => ($settings['show_remaining_days'] ? 'yes' : 'no')));
   }
 
   return $summary;
@@ -426,6 +438,13 @@ function _date_field_widget_settings_form($field, $instance) {
       );
     }
   }
+
+  $form['advanced']['no_fieldset'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Render as a regular field'),
+    '#default_value' => !empty($settings['no_fieldset']),
+    '#description' => t('Whether to render this field as a regular field instead of a fieldset. The date field elements are wrapped in a fieldset by default, and may not display well without it.'),
+  );
 
   $context = array(
     'field' => $field,

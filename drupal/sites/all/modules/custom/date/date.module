@@ -43,6 +43,11 @@ function date_default_format($type) {
  * Wrapper function around each of the widget types for creating a date object.
  */
 function date_input_date($field, $instance, $element, $input) {
+  // Trim extra spacing off user input of text fields.
+  if (isset($input['date'])) {
+    $input['date'] = trim($input['date']);
+  }
+
   switch ($instance['widget']['type']) {
     case 'date_text':
       $function = 'date_text_input_date';
@@ -71,6 +76,7 @@ function date_theme() {
   );
   $themes = array(
     'date_combo' => $base + array('render element' => 'element'),
+    'date_form_element' => $base + array('render element' => 'element'),
     'date_text_parts' => $base + array('render element' => 'element'),
     'date' => $base + array('render element' => 'element'),
     'date_display_single' => $base + array(
@@ -102,6 +108,11 @@ function date_theme() {
         'add_rdf' => NULL,
         'microdata' => NULL,
         'add_microdata' => NULL,
+      ),
+    ),
+    'date_display_remaining' => $base + array(
+      'variables' => array(
+        'remaining_days' => NULL,
       ),
     ),
     'date_display_combination' => $base + array(
@@ -215,8 +226,10 @@ function date_formatter_process($formatter, $entity_type, $entity, $field, $inst
   $settings = $display['settings'];
   $field_name = $field['field_name'];
   $format = date_formatter_format($formatter, $settings, $granularity, $langcode);
-  $timezone = isset($item['timezone']) ? $item['timezone'] : '';
-  $timezone = date_get_timezone($field['settings']['tz_handling'], $timezone);
+  if(!isset($field['settings']['tz_handling']) || $field['settings']['tz_handling'] !== 'utc'){
+    $timezone = isset($item['timezone']) ? $item['timezone'] : '';
+    $timezone = date_get_timezone($field['settings']['tz_handling'], $timezone);
+  }
   $timezone_db = date_get_timezone_db($field['settings']['tz_handling']);
   $db_format = date_type_format($field['type']);
   $process = date_process_values($field);

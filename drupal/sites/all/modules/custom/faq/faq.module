@@ -217,11 +217,6 @@ function faq_form($node, $form_state) {
   $form = node_content_form($node, $form_state);
   $form['title']['#description'] = t('Question to be answered.  This will appear in all question listings, such as the FAQ blocks.');
 
-  // Answer.
-  if (!empty($type->body_label)) {
-    field_attach_form('node', $node, $form, $form_state, $node->language);
-  }
-
   return $form;
 }
 
@@ -234,7 +229,8 @@ function faq_form($node, $form_state) {
  *   The node object.
  */
 function faq_insert($node) {
-  $detailed_question = reset(field_get_items('node', $node, 'field_detailed_question'));
+  $items = field_get_items('node', $node, 'field_detailed_question');
+  $detailed_question = reset($items);
   db_insert('faq_questions')
     ->fields(array(
       'nid' => $node->nid,
@@ -430,7 +426,7 @@ function faq_page($tid = 0, $faq_display = '', $category_display = '') {
 
   // Configure the breadcrumb trail.
   if (!empty($tid) && $current_term = taxonomy_term_load($tid)) {
-    if (!drupal_lookup_path('alias', arg(0) . '/' . $tid) && module_exists('pathauto')) {
+    if (variable_get('faq_auto_generate_alias', TRUE) && !drupal_lookup_path('alias', arg(0) . '/' . $tid) && module_exists('pathauto')) {
       $alias = pathauto_create_alias('faq', 'insert', arg(0) . '/' . arg(1), array('term' => $current_term));
       if ($alias) {
         drupal_goto($alias['alias']);

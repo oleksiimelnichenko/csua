@@ -320,6 +320,18 @@ function date_popup_element_process($element, &$form_state, $form) {
   $element['date'] = date_popup_process_date_part($element);
   $element['time'] = date_popup_process_time_part($element);
 
+  // Make changes if instance is set to be rendered as a regular field.
+  if (!empty($element['#instance']['widget']['settings']['no_fieldset']) && $element['#field']['cardinality'] == 1) {
+    if (!empty($element['date']) && empty($element['time'])) {
+      $element['date']['#title'] = check_plain($element['#instance']['label']);
+      $element['date']['#required'] = $element['#required'];
+    }
+    elseif (empty($element['date']) && !empty($element['time'])) {
+      $element['time']['#title'] = check_plain($element['#instance']['label']);
+      $element['time']['#required'] = $element['#required'];
+    }
+  }
+
   if (isset($element['#element_validate'])) {
     array_push($element['#element_validate'], 'date_popup_validate');
   }
@@ -590,8 +602,8 @@ function date_popup_input_date($element, $input, $auto_complete = FALSE) {
 
   $format = date_popup_date_format($element);
   $format .= $has_time ? ' ' . date_popup_time_format($element) : '';
-  $datetime = $input['date'];
-  $datetime .= $has_time ? ' ' . $input['time'] : '';
+  $datetime = trim($input['date']);
+  $datetime .= $has_time ? ' ' . trim($input['time']) : '';
   $date = new DateObject($datetime, $element['#date_timezone'], $format);
   if (is_object($date)) {
     $date->limitGranularity($granularity);
@@ -619,8 +631,17 @@ function date_popup_time_formats($with_seconds = FALSE) {
  * TODO Remove any formats not supported by the widget, if any.
  */
 function date_popup_formats() {
-  $formats = str_replace('i', 'i:s', array_keys(system_get_date_formats('short')));
+  // Load short date formats.
+  $formats = system_get_date_formats('short');
+
+  // Load custom date formats.
+  if ($formats_custom = system_get_date_formats('custom')) {
+    $formats = array_merge($formats, $formats_custom);
+  }
+
+  $formats = str_replace('i', 'i:s', array_keys($formats));
   $formats = drupal_map_assoc($formats);
+
   return $formats;
 }
 
